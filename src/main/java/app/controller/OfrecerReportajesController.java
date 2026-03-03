@@ -12,6 +12,9 @@ public class OfrecerReportajesController {
 	private OfrecerReportajesModel model;
 	private OfrecerReportajesView view;
 	private String agenciaActual;
+	
+	// Contador de cambios realizados en la sesión actual
+	private int operacionesRealizadas = 0;
 
 	public OfrecerReportajesController(OfrecerReportajesModel m, OfrecerReportajesView v, String agencia) {
 		this.model = m;
@@ -21,29 +24,47 @@ public class OfrecerReportajesController {
 	}
 
 	public void initView() {
+		this.view.lblAgenciaSeleccionada.setText("Agencia: " + agenciaActual);
 		cargarEventos();
 
-		// Listener: Al seleccionar un evento, actualizamos las tablas de empresas
+		// Actualizar tablas al seleccionar un evento
 		view.tableEventos.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
 				actualizarTablasDependientes();
 			}
 		});
 
-		// Listener: Al cambiar el filtro (Sin oferta / Con oferta)
-		view.comboFiltroEmpresas.addActionListener(e -> actualizarTablasDependientes());
+		// Filtro de empresas (Sin oferta / Ya ofertadas)
+		view.comboFiltroEmpresas.addActionListener(e -> {
+			int fila = view.tableEventos.getSelectedRow();
+			if (fila != -1) {
+				cargarEmpresasSegunFiltro((int) view.tableEventos.getValueAt(fila, 0));
+			}
+		});
 
-		// Botón OFERTAR (Lógica HU #33526)
+		// --- ACCIONES DE BOTONES ---
+		
 		view.btnOfertar.addActionListener(e -> ejecutarOferta());
-
-		// Botón QUITAR OFRECIMIENTO (Lógica Nueva HU #33531)
+		
 		view.btnQuitarOfrecimiento.addActionListener(e -> ejecutarQuitarOfrecimiento());
 
-		// Botones de utilidad
+		// Botón ACEPTAR TODO: Muestra el resumen de cambios de la sesión
+		view.btnAceptarTodo.addActionListener(e -> {
+			if (operacionesRealizadas == 0) {
+				SwingUtil.showMessage("No se han realizado cambios en esta sesión.", "Aviso", 1);
+			} else {
+				String mensaje = "Sesión finalizada con éxito.\nSe han registrado " + operacionesRealizadas + " cambios en la base de datos.";
+				SwingUtil.showMessage(mensaje, "Éxito", 1);
+				operacionesRealizadas = 0; 
+			}
+		});
+
 		view.btnCancelar.addActionListener(e -> view.dispose());
+		
 		view.btnLimpiarSeleccion.addActionListener(e -> {
 			view.tableEventos.clearSelection();
 			limpiarTablas();
+			operacionesRealizadas = 0;
 		});
 
 		view.setVisible(true);
@@ -60,100 +81,99 @@ public class OfrecerReportajesController {
 		}
 	}
 
-	private void cargarEmpresasSegunFiltro(int idEvento) {
-		int filtro = view.comboFiltroEmpresas.getSelectedIndex();
-		List<OfrecerReportajesDTO> empresas;
-		
-		if (filtro == 0) { // OPCIÓN: "Ver empresas SIN OFERTA"
-			empresas = model.getEmpresasSinOferta(idEvento);
-			configurarTablaConChecks(empresas);
-			view.btnOfertar.setEnabled(true);
-			view.btnQuitarOfrecimiento.setEnabled(false);
-		} else { // OPCIÓN: "Ver empresas YA OFERTADAS"
-			empresas = model.getEmpresasConOferta(idEvento);
-			String[] columnas = {"id_empresa", "nombre_empresa", "estado"};
-			view.tableEmpresas.setModel(SwingUtil.getTableModelFromPojos(empresas, columnas));
-			view.btnOfertar.setEnabled(false);
-			view.btnQuitarOfrecimiento.setEnabled(true);
-		}
-		SwingUtil.autoAdjustColumns(view.tableEmpresas);
-	}
-
 	private void ejecutarQuitarOfrecimiento() {
 		int filaEvento = view.tableEventos.getSelectedRow();
-		int filaEmpresa = view.tableEmpresas.getSelectedRow();
+		int filaOferta = view.tableOfertasEnCurso.getSelectedRow();
 		
-		if (filaEmpresa == -1) {
-			SwingUtil.showMessage("Seleccione una empresa de la lista central para quitar el ofrecimiento.", "Aviso", 1);
+		if (filaOferta == -1) {
+			SwingUtil.showMessage("Seleccione una empresa de 'OFERTAS EN CURSO' para quitarla.", "Aviso", 1);
 			return;
 		}
 
 		int idEvento = (int) view.tableEventos.getValueAt(filaEvento, 0);
-		int idEmpresa = (int) view.tableEmpresas.getValueAt(filaEmpresa, 0);
+		int idEmpresa = (int) view.tableOfertasEnCurso.getValueAt(filaOferta, 0);
 
-		// 1. Validar reglas de la HU #33531
 		OfrecerReportajesDTO detalle = model.getDetalleOfrecimiento(idEvento, idEmpresa);
 
-		// Regla: No se puede quitar si ya tiene acceso (1 en SQLite)
+		// Restricción: No se puede quitar si tiene acceso (1)
 		if (detalle.getTiene_acceso() == 1) {
-			SwingUtil.showMessage("No se puede quitar el ofrecimiento: La empresa ya tiene acceso concedido.", "Error de Seguridad", 0);
+			SwingUtil.showMessage("No se puede quitar: Acceso ya concedido.", "Error", 0);
 			return;
 		}
 
-		// Regla: Si está ACEPTADO, enviar notificación por email
+		// Notificación básica si estaba ACEPTADO
 		if ("ACEPTADO".equals(detalle.getEstado())) {
-			enviarEmailNotificacion(detalle.getEmail(), detalle.getNombre_empresa());
+			SwingUtil.showMessage("Se ha notificado por email a " + detalle.getEmail() + " la cancelación.", "Email enviado", 1);
 		}
 
-		// 2. Ejecutar borrado
 		model.eliminarOfrecimiento(idEvento, idEmpresa);
-		SwingUtil.showMessage("Ofrecimiento retirado con éxito.", "Información", 1);
+		operacionesRealizadas++; // Incrementamos contador
 		actualizarTablasDependientes();
 	}
 
-	private void enviarEmailNotificacion(String email, String empresa) {
-		// Simulación de envío de email según requisito
-		System.out.println("LOG: Enviando email a " + email + " notificando la cancelación del reportaje para " + empresa);
-		SwingUtil.showMessage("Se ha enviado una notificación automática a: " + email, "Email enviado", 1);
+	private void ejecutarOferta() {
+		int filaEvento = view.tableEventos.getSelectedRow();
+		if (filaEvento == -1) return;
+		
+		int idEvento = (int) view.tableEventos.getValueAt(filaEvento, 0);
+		boolean cambios = false;
+
+		for (int r = 0; r < view.tableEmpresas.getRowCount(); r++) {
+			Boolean check = (Boolean) view.tableEmpresas.getValueAt(r, 2);
+			if (check != null && check) {
+				model.insertarOfrecimientos(idEvento, (int) view.tableEmpresas.getValueAt(r, 0));
+				operacionesRealizadas++; // Incrementamos contador
+				cambios = true;
+			}
+		}
+		
+		if (cambios) {
+			actualizarTablasDependientes();
+		} else {
+			SwingUtil.showMessage("No hay empresas seleccionadas.", "Aviso", 1);
+		}
 	}
 
-	// --- MÉTODOS DE APOYO (Carga de datos y tablas) ---
+	private void cargarEmpresasSegunFiltro(int idEvento) {
+		int filtro = view.comboFiltroEmpresas.getSelectedIndex();
+		if (filtro == 0) { // Empresas sin oferta
+			configurarTablaConChecks(model.getEmpresasSinOferta(idEvento));
+			view.btnOfertar.setEnabled(true);
+		} else { // Empresas ya ofertadas
+			String[] cols = {"id_empresa", "nombre_empresa", "estado"};
+			view.tableEmpresas.setModel(SwingUtil.getTableModelFromPojos(model.getEmpresasConOferta(idEvento), cols));
+			view.btnOfertar.setEnabled(false);
+		}
+		SwingUtil.autoAdjustColumns(view.tableEmpresas);
+	}
+
+	private void cargarOfertasEnCurso(int idEvento) {
+		List<OfrecerReportajesDTO> ofertas = model.getEmpresasConOferta(idEvento);
+		String[] columnas = {"id_empresa", "nombre_empresa", "estado"};
+		view.tableOfertasEnCurso.setModel(SwingUtil.getTableModelFromPojos(ofertas, columnas));
+		SwingUtil.autoAdjustColumns(view.tableOfertasEnCurso);
+	}
 
 	private void cargarEventos() {
 		List<OfrecerReportajesDTO> eventos = model.getEventosConReportero(agenciaActual);
 		String[] columnas = {"id_evento", "nombre_evento", "reportero_asignado"};
 		view.tableEventos.setModel(SwingUtil.getTableModelFromPojos(eventos, columnas));
-	}
-
-	private void cargarOfertasEnCurso(int idEvento) {
-		List<OfrecerReportajesDTO> ofertas = model.getEmpresasConOferta(idEvento);
-		String[] columnas = {"nombre_empresa", "estado"};
-		view.tableOfertasEnCurso.setModel(SwingUtil.getTableModelFromPojos(ofertas, columnas));
-	}
-
-	private void ejecutarOferta() {
-		int filaEvento = view.tableEventos.getSelectedRow();
-		int idEvento = (int) view.tableEventos.getValueAt(filaEvento, 0);
-		for (int i = 0; i < view.tableEmpresas.getRowCount(); i++) {
-			Boolean check = (Boolean) view.tableEmpresas.getValueAt(i, 2);
-			if (check != null && check) {
-				model.insertarOfrecimientos(idEvento, (int) view.tableEmpresas.getValueAt(i, 0));
-			}
-		}
-		actualizarTablasDependientes();
+		SwingUtil.autoAdjustColumns(view.tableEventos);
 	}
 
 	private void configurarTablaConChecks(List<OfrecerReportajesDTO> empresas) {
 		String[] columnas = {"id_empresa", "nombre_empresa"};
-		DefaultTableModel tableModel = (DefaultTableModel) SwingUtil.getTableModelFromPojos(empresas, columnas);
-		tableModel.addColumn("Seleccionar");
+		DefaultTableModel tm = (DefaultTableModel) SwingUtil.getTableModelFromPojos(empresas, columnas);
+		tm.addColumn("Seleccionar");
 		view.tableEmpresas.setModel(new DefaultTableModel() {
-			@Override public int getRowCount() { return tableModel.getRowCount(); }
-			@Override public int getColumnCount() { return tableModel.getColumnCount(); }
-			@Override public Object getValueAt(int r, int c) { return tableModel.getValueAt(r, c); }
-			@Override public void setValueAt(Object v, int r, int c) { tableModel.setValueAt(v, r, c); fireTableCellUpdated(r, c); }
+			private static final long serialVersionUID = 1L;
+			@Override public int getRowCount() { return tm.getRowCount(); }
+			@Override public int getColumnCount() { return tm.getColumnCount(); }
+			@Override public Object getValueAt(int r, int c) { return tm.getValueAt(r, c); }
+			@Override public void setValueAt(Object v, int r, int c) { tm.setValueAt(v, r, c); fireTableCellUpdated(r, c); }
 			@Override public Class<?> getColumnClass(int c) { return c == 2 ? Boolean.class : Object.class; }
 			@Override public boolean isCellEditable(int r, int c) { return c == 2; }
+			@Override public String getColumnName(int c) { return tm.getColumnName(c); }
 		});
 	}
 

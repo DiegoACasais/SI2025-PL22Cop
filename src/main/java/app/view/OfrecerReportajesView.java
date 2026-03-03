@@ -27,13 +27,14 @@ public class OfrecerReportajesView extends JFrame {
 	
 	// Botones
 	public JButton btnOfertar;
-	public JButton btnQuitarOfrecimiento; // Nuevo botón HU #33531
+	public JButton btnQuitarOfrecimiento; 
 	public JButton btnCancelar;
 	public JButton btnAceptarTodo;
 	public JButton btnLimpiarSeleccion;
+	public JLabel lblAgenciaSeleccionada;
 
 	public OfrecerReportajesView() {
-		setTitle("Gestión de Ofrecimientos de Reportajes");
+		setTitle("Gestión y Modificación de Ofrecimientos de Reportajes");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 1050, 600);
 		contentPane = new JPanel();
@@ -41,75 +42,80 @@ public class OfrecerReportajesView extends JFrame {
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 
-		// --- COLUMNA 1: EVENTOS (Igual al prototipo original) ---
+		// --- CABECERA ---
+		lblAgenciaSeleccionada = new JLabel("Agencia: -");
+		lblAgenciaSeleccionada.setFont(new Font("Tahoma", Font.BOLD, 12));
+		lblAgenciaSeleccionada.setBounds(20, 5, 400, 20);
+		contentPane.add(lblAgenciaSeleccionada);
+
+		// --- COLUMNA 1: EVENTOS ---
 		JLabel lblEventos = new JLabel("EVENTOS CON REPORTEROS ASIGNADOS:");
 		lblEventos.setFont(new Font("Tahoma", Font.BOLD, 11));
-		lblEventos.setBounds(20, 20, 300, 14);
+		lblEventos.setBounds(20, 30, 300, 14);
 		contentPane.add(lblEventos);
 
 		JScrollPane scrollEventos = new JScrollPane();
-		scrollEventos.setBounds(20, 45, 300, 450);
+		scrollEventos.setBounds(20, 55, 300, 480);
 		contentPane.add(scrollEventos);
 		
 		tableEventos = new JTable();
 		scrollEventos.setViewportView(tableEventos);
 
-		// --- COLUMNA 2: GESTIÓN DE EMPRESAS (Modificada HU #33531) ---
+		// --- COLUMNA 2: GESTIÓN DE EMPRESAS (OFRECER) ---
 		JLabel lblEmpresas = new JLabel("GESTIÓN DE EMPRESAS COMUNICACIÓN:");
 		lblEmpresas.setFont(new Font("Tahoma", Font.BOLD, 11));
-		lblEmpresas.setBounds(340, 20, 300, 14);
+		lblEmpresas.setBounds(340, 30, 300, 14);
 		contentPane.add(lblEmpresas);
 
-		// Selector de Filtro
 		comboFiltroEmpresas = new JComboBox<String>();
 		comboFiltroEmpresas.setModel(new DefaultComboBoxModel<String>(new String[] {
 			"Ver empresas SIN OFERTA", 
 			"Ver empresas YA OFERTADAS"
 		}));
-		comboFiltroEmpresas.setBounds(340, 45, 330, 25);
+		comboFiltroEmpresas.setBounds(340, 55, 330, 25);
 		contentPane.add(comboFiltroEmpresas);
 
 		JScrollPane scrollEmpresas = new JScrollPane();
-		scrollEmpresas.setBounds(340, 80, 330, 350);
+		scrollEmpresas.setBounds(340, 90, 330, 350);
 		contentPane.add(scrollEmpresas);
 		
 		tableEmpresas = new JTable();
 		scrollEmpresas.setViewportView(tableEmpresas);
 
-		// Botonera Central
 		btnOfertar = new JButton("OFERTAR");
-		btnOfertar.setBounds(340, 440, 155, 30);
+		btnOfertar.setBounds(340, 450, 330, 35);
 		contentPane.add(btnOfertar);
 
-		btnQuitarOfrecimiento = new JButton("QUITAR OFRECIMIENTO");
-		btnQuitarOfrecimiento.setForeground(Color.RED);
-		btnQuitarOfrecimiento.setBounds(515, 440, 155, 30);
-		btnQuitarOfrecimiento.setEnabled(false); // Se habilita según el filtro
-		contentPane.add(btnQuitarOfrecimiento);
-
 		btnCancelar = new JButton("CANCELAR");
-		btnCancelar.setBounds(340, 480, 330, 30);
+		btnCancelar.setBounds(340, 500, 330, 35);
 		contentPane.add(btnCancelar);
 
-		// --- COLUMNA 3: OFERTAS EN CURSO ---
+		// --- COLUMNA 3: OFERTAS EN CURSO (MODIFICAR) ---
 		JLabel lblOfertas = new JLabel("OFERTAS EN CURSO (Estado):");
 		lblOfertas.setFont(new Font("Tahoma", Font.BOLD, 11));
-		lblOfertas.setBounds(690, 20, 300, 14);
+		lblOfertas.setBounds(690, 30, 300, 14);
 		contentPane.add(lblOfertas);
 
 		JScrollPane scrollOfertas = new JScrollPane();
-		scrollOfertas.setBounds(690, 45, 320, 385);
+		scrollOfertas.setBounds(690, 55, 320, 335); // Ajustado para dejar espacio al botón
 		contentPane.add(scrollOfertas);
 		
 		tableOfertasEnCurso = new JTable();
 		scrollOfertas.setViewportView(tableOfertasEnCurso);
 
+		// REUBICACIÓN SOLICITADA: Botón Quitar bajo la lista de ofertas
+		btnQuitarOfrecimiento = new JButton("QUITAR OFRECIMIENTO");
+		btnQuitarOfrecimiento.setForeground(new Color(200, 0, 0)); // Rojo oscuro para visibilidad
+		btnQuitarOfrecimiento.setFont(new Font("Tahoma", Font.BOLD, 11));
+		btnQuitarOfrecimiento.setBounds(690, 400, 320, 35); 
+		contentPane.add(btnQuitarOfrecimiento);
+
 		btnAceptarTodo = new JButton("ACEPTAR TODO");
-		btnAceptarTodo.setBounds(690, 440, 320, 30);
+		btnAceptarTodo.setBounds(690, 450, 320, 35);
 		contentPane.add(btnAceptarTodo);
 
 		btnLimpiarSeleccion = new JButton("LIMPIAR TABLAS");
-		btnLimpiarSeleccion.setBounds(690, 480, 320, 30);
+		btnLimpiarSeleccion.setBounds(690, 500, 320, 35);
 		contentPane.add(btnLimpiarSeleccion);
 	}
 }
