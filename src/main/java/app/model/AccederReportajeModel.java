@@ -38,4 +38,11 @@ public class AccederReportajeModel {
         List<AccederReportajeDTO> res = db.executeQueryPojo(AccederReportajeDTO.class, sql, idEvento);
         return res.isEmpty() ? null : res.get(0);
     }
+
+    public void marcarReportajeComoDescargado(int idEvento, String nombreEmpresa) {
+        String sql = "UPDATE Ofrecimiento SET descargado = 'SI' "
+                + "WHERE id_evento = ? "
+                + "AND id_empresa = (SELECT id_empresa FROM Empresa_Comunicacion WHERE nombre = ?)";
+        db.executeUpdate(sql, idEvento, nombreEmpresa);
+    }
 }

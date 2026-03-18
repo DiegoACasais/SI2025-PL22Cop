@@ -1,6 +1,7 @@
 package app.controller;
 
 import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -39,6 +40,8 @@ public class AccederReportajeController {
             }
         });
 
+        view.btnDescargarJson.addActionListener(e -> marcarComoDescargado());
+
         view.setVisible(true);
     }
 
@@ -67,5 +70,19 @@ public class AccederReportajeController {
                 view.lblHoraVersion.setText("Hora: " + detalle.getHora());
             }
         }
+    }
+
+    private void marcarComoDescargado() {
+        int row = view.tableEventos.getSelectedRow();
+        if (row == -1) {
+            SwingUtil.showMessage("Debes seleccionar un reportaje antes de descargarlo.", "Aviso",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int idEvento = (int) view.tableEventos.getValueAt(row, 0);
+        model.marcarReportajeComoDescargado(idEvento, nombreEmpresa);
+        SwingUtil.showMessage("Se ha registrado la descarga del reportaje.", "Informacion",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 }
