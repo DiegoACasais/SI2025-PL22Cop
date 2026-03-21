@@ -10,10 +10,10 @@ public class DarAccesoEmpresaModel {
 
 	private Database db = new Database();
 
-	// 1. Eventos de la agencia que SÍ tienen reportaje entregado
+	// 1. Eventos de la agencia que SÃ tienen reportaje entregado
 	public List<EventoDisplayDTO> getEventosConReportaje(String nombreAgencia) {
 		String sql = "SELECT e.id_evento, e.descripcion, e.fecha, "
-				+ "COALESCE(GROUP_CONCAT(DISTINCT t.nombre), 'Sin temática') AS tematicas "
+				+ "COALESCE(GROUP_CONCAT(DISTINCT t.nombre), 'Sin temÃ¡tica') AS tematicas "
 				+ "FROM Evento e "
 				+ "JOIN Agencia a ON e.id_agencia = a.id_agencia "
 				+ "JOIN Reportaje r ON e.id_evento = r.id_evento "
@@ -34,7 +34,7 @@ public class DarAccesoEmpresaModel {
 
 	public void concederAcceso(Integer idEvento, Integer idEmpresa) {
 		if (idEvento == null || idEmpresa == null) {
-			throw new giis.demo.util.ApplicationException("Error interno: Los IDs están vacíos.");
+			throw new giis.demo.util.ApplicationException("Error interno: Los IDs estÃ¡n vacÃ­os.");
 		}
 		String sql = "UPDATE Ofrecimiento SET tiene_acceso = 1 WHERE id_evento = ? AND id_empresa = ?";
 		db.executeUpdate(sql, idEvento, idEmpresa);
@@ -42,7 +42,7 @@ public class DarAccesoEmpresaModel {
 
 	public void revocarAcceso(Integer idEvento, Integer idEmpresa) {
 		if (idEvento == null || idEmpresa == null) {
-			throw new giis.demo.util.ApplicationException("Error interno: Los IDs están vacíos.");
+			throw new giis.demo.util.ApplicationException("Error interno: Los IDs estÃ¡n vacÃ­os.");
 		}
 		String sql = "UPDATE Ofrecimiento SET tiene_acceso = 0 WHERE id_evento = ? AND id_empresa = ? AND descargado = 0";
 		db.executeUpdate(sql, idEvento, idEmpresa);

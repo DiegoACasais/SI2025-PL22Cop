@@ -28,14 +28,14 @@ public class AccederReportajeView extends JFrame {
 
 	// Componentes publicos para que el controlador los gestione
 	public JTable tableEventos;
-	public JTable tableMultimedia;
 	public JTextField txtTitulo;
 	public JTextField txtSubtitulo;
 	public JTextArea txtCuerpo;
 	public JLabel lblFechaVersion;
 	public JLabel lblHoraVersion;
 	public JLabel lblNombreEmpresa;
-	public JLabel lblPreviewMultimedia;
+	public JLabel lblPreviewFotos;
+	public JLabel lblPreviewVideos;
 	public JButton btnDescargarJson;
 
 	public AccederReportajeView() {
@@ -142,27 +142,47 @@ public class AccederReportajeView extends JFrame {
 	}
 
 	private JPanel crearPanelMultimedia() {
-		JPanel panelMultimedia = new JPanel(new BorderLayout(10, 0));
+		JPanel panelMultimedia = new JPanel(new BorderLayout());
 		panelMultimedia.setBorder(BorderFactory.createTitledBorder("Multimedia definitivo asociado"));
 
-		tableMultimedia = new JTable();
-		tableMultimedia.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		tableMultimedia.setDefaultEditor(Object.class, null);
-
-		JScrollPane scrollMultimedia = new JScrollPane(tableMultimedia);
-		scrollMultimedia.setPreferredSize(new Dimension(360, 0));
-		panelMultimedia.add(scrollMultimedia, BorderLayout.WEST);
-
-		lblPreviewMultimedia = new JLabel(
-			"<html><div style='text-align:center; padding:12px;'>"
-				+ "Aqui se mostrara la previsualizacion<br/>"
-				+ "de fotos y videos definitivos del reportaje."
-				+ "</div></html>",
-			SwingConstants.CENTER);
-		lblPreviewMultimedia.setBorder(BorderFactory.createEtchedBorder());
-		panelMultimedia.add(lblPreviewMultimedia, BorderLayout.CENTER);
+		JPanel panelPreviews = new JPanel(new GridLayout(1, 2, 10, 0));
+		panelPreviews.add(crearPanelPreviewFotos());
+		panelPreviews.add(crearPanelPreviewVideos());
+		panelMultimedia.add(panelPreviews, BorderLayout.CENTER);
 
 		return panelMultimedia;
+	}
+
+	private JPanel crearPanelPreviewFotos() {
+		JPanel panelFotos = new JPanel(new BorderLayout());
+		panelFotos.setBorder(BorderFactory.createTitledBorder("Fotos"));
+
+		lblPreviewFotos = new JLabel(
+			"<html><div style='text-align:center; padding:12px;'>"
+				+ "Aqui se mostraran las fotos<br/>"
+				+ "definitivas del reportaje."
+				+ "</div></html>",
+			SwingConstants.CENTER);
+		lblPreviewFotos.setBorder(BorderFactory.createEtchedBorder());
+		panelFotos.add(lblPreviewFotos, BorderLayout.CENTER);
+
+		return panelFotos;
+	}
+
+	private JPanel crearPanelPreviewVideos() {
+		JPanel panelVideos = new JPanel(new BorderLayout());
+		panelVideos.setBorder(BorderFactory.createTitledBorder("Videos"));
+
+		lblPreviewVideos = new JLabel(
+			"<html><div style='text-align:center; padding:12px;'>"
+				+ "Aqui se mostraran los videos<br/>"
+				+ "definitivos del reportaje."
+				+ "</div></html>",
+			SwingConstants.CENTER);
+		lblPreviewVideos.setBorder(BorderFactory.createEtchedBorder());
+		panelVideos.add(lblPreviewVideos, BorderLayout.CENTER);
+
+		return panelVideos;
 	}
 
 	private JPanel crearPanelAcciones() {

@@ -20,7 +20,7 @@ public class EmpresaDisplayDTO {
 	public Integer getTieneAcceso() { return tieneAcceso; }
 	public void setTieneAcceso(Integer tieneAcceso) {
 		this.tieneAcceso = tieneAcceso;
-		this.acceso = (tieneAcceso != null && tieneAcceso == 1) ? "SÍ" : "NO";
+		this.acceso = (tieneAcceso != null && tieneAcceso == 1) ? "SÃ" : "NO";
 	}
 
 	public Integer getDescargado() { return descargado; }
