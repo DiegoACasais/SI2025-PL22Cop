@@ -16,6 +16,11 @@ public class OfrecerReportajesDTO {
     private String estado;
     private int tiene_acceso;
 
+    // --- NUEVOS ATRIBUTOS PARA EL EMBARGO (HU 34348) ---
+    private String fecha_fin_embargo;
+    private boolean acepta_embargos;
+    private String estado_embargo;
+
     public OfrecerReportajesDTO() {}
 
     public int getId_evento() { return id_evento; }
@@ -44,6 +49,47 @@ public class OfrecerReportajesDTO {
 
     public int getTiene_acceso() { return tiene_acceso; }
     public void setTiene_acceso(int tiene_acceso) { this.tiene_acceso = tiene_acceso; }
+
+    // --- GETTERS Y SETTERS DEL EMBARGO ---
+    public boolean isAcepta_embargos() { return acepta_embargos; }
+    public void setAcepta_embargos(boolean acepta_embargos) { this.acepta_embargos = acepta_embargos; }
+
+    public String getEstado_embargo() { return estado_embargo; }
+    public void setEstado_embargo(String estado_embargo) { this.estado_embargo = estado_embargo; }
+
+    public String getFecha_fin_embargo() { return fecha_fin_embargo; }
+    public void setFecha_fin_embargo(String fecha_fin_embargo) { 
+        this.fecha_fin_embargo = fecha_fin_embargo; 
+        calcularEstadoEmbargo();
+    }
+
+    // Método que evalúa la fecha recibida por SQL y asigna el texto de la columna
+    private void calcularEstadoEmbargo() {
+        if (this.fecha_fin_embargo == null || this.fecha_fin_embargo.trim().isEmpty()) {
+            this.estado_embargo = "NINGUNO";
+            return;
+        }
+        try {
+            // Intentamos parsear formato con hora (datetime)
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            java.util.Date fechaEmbargo = sdf.parse(this.fecha_fin_embargo);
+            if (fechaEmbargo.after(new java.util.Date())) {
+                this.estado_embargo = "ACTIVO";
+            } else {
+                this.estado_embargo = "CADUCADO";
+            }
+        } catch (Exception e) {
+            try {
+                 // Si falla, intentamos parsear formato sin hora (date)
+                 java.text.SimpleDateFormat sdf2 = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                 java.util.Date fechaEmbargo = sdf2.parse(this.fecha_fin_embargo);
+                 if (fechaEmbargo.after(new java.util.Date())) this.estado_embargo = "ACTIVO";
+                 else this.estado_embargo = "CADUCADO";
+            } catch (Exception e2) {
+                 this.estado_embargo = "Desconocido";
+            }
+        }
+    }
 
     @Override
     public String toString() {

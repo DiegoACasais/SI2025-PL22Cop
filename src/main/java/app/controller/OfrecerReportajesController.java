@@ -177,7 +177,8 @@ public class OfrecerReportajesController {
 
 	private void cargarEventos() {
 		eventosCargados = model.getEventosConReportero(agenciaActual);
-		String[] columnas = { "id_evento", "nombre_evento", "reportero_asignado" };
+		// NUEVO: Añadimos la columna "estado_embargo" a la visualizacion
+		String[] columnas = { "id_evento", "nombre_evento", "reportero_asignado", "estado_embargo" };
 		view.tableEventos.setModel(SwingUtil.getTableModelFromPojos(eventosCargados, columnas));
 		SwingUtil.autoAdjustColumns(view.tableEventos);
 	}
@@ -186,15 +187,57 @@ public class OfrecerReportajesController {
 		String[] columnas = { "id_empresa", "nombre_empresa" };
 		DefaultTableModel tm = (DefaultTableModel) SwingUtil.getTableModelFromPojos(empresas, columnas);
 		tm.addColumn("Seleccionar");
+
+		// NUEVO: Evaluamos si el evento actual tiene el embargo activo
+		boolean embargoActivo = false;
+		int filaEvento = view.tableEventos.getSelectedRow();
+		if (filaEvento != -1) {
+			String estadoEmbargo = (String) view.tableEventos.getValueAt(filaEvento, 3);
+			if ("ACTIVO".equals(estadoEmbargo)) {
+				embargoActivo = true;
+			}
+		}
+		
+		final boolean hayEmbargo = embargoActivo;
+
 		view.tableEmpresas.setModel(new DefaultTableModel() {
 			private static final long serialVersionUID = 1L;
+
 			@Override public int getRowCount() { return tm.getRowCount(); }
 			@Override public int getColumnCount() { return tm.getColumnCount(); }
-			@Override public Object getValueAt(int r, int c) { return tm.getValueAt(r, c); }
-			@Override public void setValueAt(Object v, int r, int c) { tm.setValueAt(v, r, c); fireTableCellUpdated(r, c); }
+			
+			@Override public Object getValueAt(int r, int c) { 
+				if (c == 2) {
+					// Si hay embargo y la empresa NO los acepta, desmarcamos y bloqueamos
+					if (hayEmbargo && !empresas.get(r).isAcepta_embargos()) {
+						return false; 
+					}
+				}
+				return tm.getValueAt(r, c); 
+			}
+			
+			@Override public void setValueAt(Object v, int r, int c) { 
+				tm.setValueAt(v, r, c); 
+				fireTableCellUpdated(r, c); 
+			}
+			
 			@Override public Class<?> getColumnClass(int c) { return c == 2 ? Boolean.class : Object.class; }
-			@Override public boolean isCellEditable(int r, int c) { return c == 2; }
-			@Override public String getColumnName(int c) { return tm.getColumnName(c); }
+			
+			@Override public boolean isCellEditable(int r, int c) { 
+				if (c == 2) {
+					// Magia: Bloqueamos la edicion del checkbox si rechaza embargos
+					if (hayEmbargo && !empresas.get(r).isAcepta_embargos()) {
+						return false; 
+					}
+					return true;
+				}
+				return false; 
+			}
+			
+			@Override public String getColumnName(int c) { 
+				// Cambiamos el titulo para que el agente sepa por que no puede pulsar
+				return c == 2 ? (hayEmbargo ? "Sel. (Bloqueos)" : "Seleccionar") : tm.getColumnName(c); 
+			}
 		});
 	}
 

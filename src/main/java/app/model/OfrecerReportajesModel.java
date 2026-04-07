@@ -10,30 +10,32 @@ public class OfrecerReportajesModel {
     private Database db = new Database();
 
     /**
-     * Obtiene los eventos con reportero asignado y sus tematicas.
+     * Obtiene los eventos con reportero asignado, sus tematicas y SU FECHA DE EMBARGO DEL REPORTAJE.
      */
     public List<OfrecerReportajesDTO> getEventosConReportero(String nombreAgencia) {
         String sql = "SELECT e.id_evento, e.descripcion AS nombre_evento, "
                 + "COALESCE(GROUP_CONCAT(DISTINCT r.nombre), 'Sin reportero') AS reportero_asignado, "
-                + "COALESCE(GROUP_CONCAT(DISTINCT t.nombre), 'Sin tematica') AS tematicas_evento "
+                + "COALESCE(GROUP_CONCAT(DISTINCT t.nombre), 'Sin tematica') AS tematicas_evento, "
+                + "rep.fecha_fin_embargo " // <-- NUEVO: Leemos el embargo
                 + "FROM Evento e "
+                + "LEFT JOIN Reportaje rep ON e.id_evento = rep.id_evento " // <-- NUEVO: Join
                 + "JOIN Asignacion a ON e.id_evento = a.id_evento "
                 + "JOIN Reportero r ON a.id_reportero = r.id_reportero "
                 + "JOIN Agencia ag ON e.id_agencia = ag.id_agencia "
                 + "LEFT JOIN Evento_Tematica et ON et.id_evento = e.id_evento "
                 + "LEFT JOIN Tematica t ON t.id_tematica = et.id_tematica "
                 + "WHERE ag.nombre = ? "
-                + "GROUP BY e.id_evento, e.descripcion";
+                + "GROUP BY e.id_evento, e.descripcion, rep.fecha_fin_embargo";
 
         return db.executeQueryPojo(OfrecerReportajesDTO.class, sql, nombreAgencia);
     }
 
     /**
-     * Empresas candidatas sin oferta. Si se activa el filtro de especializacion,
-     * solo se muestran las que comparten alguna tematica con el evento.
+     * Empresas candidatas sin oferta.
      */
     public List<OfrecerReportajesDTO> getEmpresasSinOferta(int idEvento, boolean soloCoincidentes) {
-        String sql = "SELECT DISTINCT ec.id_empresa, ec.nombre AS nombre_empresa "
+        // Añadimos ec.acepta_embargos a la SELECT
+        String sql = "SELECT DISTINCT ec.id_empresa, ec.nombre AS nombre_empresa, ec.acepta_embargos "
                 + "FROM Empresa_Comunicacion ec ";
 
         if (soloCoincidentes) {
@@ -56,7 +58,7 @@ public class OfrecerReportajesModel {
      * Empresas a las que ya se ha ofrecido el reportaje.
      */
     public List<OfrecerReportajesDTO> getEmpresasConOferta(int idEvento) {
-        String sql = "SELECT e.id_empresa, e.nombre AS nombre_empresa, o.estado, o.tiene_acceso "
+        String sql = "SELECT e.id_empresa, e.nombre AS nombre_empresa, o.estado, o.tiene_acceso, e.acepta_embargos "
                 + "FROM Empresa_Comunicacion e "
                 + "JOIN Ofrecimiento o ON e.id_empresa = o.id_empresa "
                 + "WHERE o.id_evento = ? "
