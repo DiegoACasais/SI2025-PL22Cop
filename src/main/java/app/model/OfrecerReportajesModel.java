@@ -30,6 +30,7 @@ public class OfrecerReportajesModel {
                 + "HAVING COUNT(a.id_reportero) > 0 "
                 + "AND COALESCE(e.finalizado, 0) = 1";
 
+        
         return db.executeQueryPojo(OfrecerReportajesDTO.class, sql, nombreAgencia);
     }
 
