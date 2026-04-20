@@ -18,7 +18,15 @@ public class AccederReportajeModel {
                 + "FROM Evento e "
                 + "JOIN Ofrecimiento o ON e.id_evento = o.id_evento "
                 + "JOIN Empresa_Comunicacion emp ON o.id_empresa = emp.id_empresa "
-                + "WHERE emp.nombre = ? AND (o.tiene_acceso = 1 OR o.acceso_especial_embargo = 1)";
+                + "WHERE emp.nombre = ? AND ("
+                + "o.tiene_acceso = 1 "
+                + "OR o.acceso_especial_embargo = 1 "
+                + "OR (UPPER(o.estado) = 'ACEPTADO' AND EXISTS ("
+                + "SELECT 1 FROM Reportaje r "
+                + "WHERE r.id_evento = e.id_evento "
+                + "AND r.fecha_fin_embargo IS NOT NULL "
+                + "AND datetime(r.fecha_fin_embargo) > CURRENT_TIMESTAMP"
+                + ")))";
 
         return db.executeQueryPojo(AccederReportajeDTO.class, sql, nombreEmpresa);
     }

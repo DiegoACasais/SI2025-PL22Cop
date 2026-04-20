@@ -72,9 +72,6 @@ public class AccederReportajeController {
             return;
         }
 
-        view.lblFechaVersion.setText("Fecha: " + detalleActual.getFecha());
-        view.lblHoraVersion.setText("Hora: " + detalleActual.getHora());
-
         if (detalleActual.isAccesoBloqueadoPorEmbargo()) {
             aplicarVistaEmbargoSinAccesoEspecial();
         } else if (detalleActual.isAccesoSoloTextoPorEmbargo()) {
@@ -180,11 +177,15 @@ public class AccederReportajeController {
         view.txtTitulo.setText(detalleActual.getTitulo());
         view.txtSubtitulo.setText(detalleActual.getSubtitulo());
         view.txtCuerpo.setText(detalleActual.getCuerpo());
+        view.lblFechaVersion.setText("Fecha: " + detalleActual.getFecha());
+        view.lblHoraVersion.setText("Hora: " + detalleActual.getHora());
         view.lblEstadoAcceso.setText("Estado de acceso: Acceso completo disponible");
         view.lblTipoAcceso.setText("Tipo de acceso: Normal");
         view.lblFechaAccesoEmbargo.setText("Fecha de acceso por embargo: -");
-        view.lblPreviewFotos.setText(generarHtmlMultimedia("No hay fotos definitivas asociadas.", detalleActual.getFotos()));
-        view.lblPreviewVideos.setText(generarHtmlMultimedia("No hay videos definitivos asociados.", detalleActual.getVideos()));
+        view.lblPreviewFotos
+                .setText(generarHtmlMultimedia("No hay fotos definitivas asociadas.", detalleActual.getFotos()));
+        view.lblPreviewVideos
+                .setText(generarHtmlMultimedia("No hay videos definitivos asociados.", detalleActual.getVideos()));
         view.btnDescargarJson.setEnabled(true);
     }
 
@@ -192,18 +193,27 @@ public class AccederReportajeController {
         view.txtTitulo.setText("");
         view.txtSubtitulo.setText("");
         view.txtCuerpo.setText("");
+        view.lblFechaVersion.setText("Fecha: --/--/----");
+        view.lblHoraVersion.setText("Hora: --:--");
         view.lblEstadoAcceso.setText("Estado de acceso: Bloqueado por embargo");
         view.lblTipoAcceso.setText("Tipo de acceso: Sin acceso especial");
-        view.lblFechaAccesoEmbargo.setText("Fecha de acceso por embargo: " + detalleActual.getFecha_fin_embargo());
+        view.lblFechaAccesoEmbargo.setText("Fecha de acceso por embargo: -");
         view.lblPreviewFotos.setText(generarHtmlBloqueo("Contenido multimedia bloqueado hasta que finalice el embargo."));
         view.lblPreviewVideos.setText(generarHtmlBloqueo("Contenido multimedia bloqueado hasta que finalice el embargo."));
         view.btnDescargarJson.setEnabled(false);
+
+        String mensaje = "No se puede acceder a este reportaje en este momento.\n"
+                + "El contenido se encuentra bajo embargo y estara disponible a partir de la fecha:\n\n"
+                + detalleActual.getFecha_fin_embargo();
+        SwingUtil.showMessage(mensaje, "Acceso denegado", JOptionPane.WARNING_MESSAGE);
     }
 
     private void aplicarVistaEmbargoConAccesoEspecial() {
         view.txtTitulo.setText(detalleActual.getTitulo());
         view.txtSubtitulo.setText(detalleActual.getSubtitulo());
         view.txtCuerpo.setText(detalleActual.getCuerpo());
+        view.lblFechaVersion.setText("Fecha: --/--/----");
+        view.lblHoraVersion.setText("Hora: --:--");
         view.lblEstadoAcceso.setText("Estado de acceso: Previsualizacion disponible");
         view.lblTipoAcceso.setText("Tipo de acceso: Especial por embargo");
         view.lblFechaAccesoEmbargo.setText("Fecha de acceso por embargo: " + detalleActual.getFecha_fin_embargo());
